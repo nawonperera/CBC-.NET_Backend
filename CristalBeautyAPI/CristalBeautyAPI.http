@@ -1,0 +1,6 @@
+@CristalBeautyAPI_HostAddress = http://localhost:5178
+
+GET {{CristalBeautyAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
