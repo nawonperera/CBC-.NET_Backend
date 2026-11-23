@@ -1,8 +1,13 @@
 using CristalBeautyAPI.Middleware;
+using CristalBeautyAPI.Models.Dto;
 using CristalBeautyAPI.Repositories;
 using CristalBeautyAPI.Repositories.IRepository;
 using CristalBeautyAPI.Services;
 using CristalBeautyAPI.Services.IServices;
+using Microsoft.Extensions.AI;
+using OpenAI;
+using Qdrant.Client;
+using System.ClientModel;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +21,7 @@ builder.Services.AddSingleton<MongoDbService>();
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IProductAIRepository, ProductAIRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<IOtpRepository, OtpRepository>();
@@ -25,6 +31,32 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
+
+var credential = new ApiKeyCredential(builder.Configuration["DeepInfra:ApiKey"] ?? throw new InvalidOperationException("Missing configuration: DeepInfra:ApiKey."));
+
+var options = new OpenAIClientOptions()
+{
+    Endpoint = new Uri("https://api.deepinfra.com/v1/openai")
+};
+
+var openAiClient = new OpenAIClient(credential, options);
+
+IChatClient chatClient = openAiClient.GetChatClient("google/gemini-3.1-flash-lite").AsIChatClient();
+
+var embeddingGenerator = openAiClient.GetEmbeddingClient("sentence-transformers/all-MiniLM-L12-v2").AsIEmbeddingGenerator();
+
+builder.Services.AddChatClient(chatClient).UseFunctionInvocation();
+builder.Services.AddEmbeddingGenerator(embeddingGenerator);
+
+builder.Services.AddSingleton<QdrantClient>(sp =>
+{
+    var uri = new Uri(builder.Configuration["Qdrant:Endpoint"]!);
+    var apiKey = builder.Configuration["Qdrant:ApiKey"];
+
+    return new QdrantClient(uri, apiKey: apiKey);
+});
+
+builder.Services.AddQdrantCollection<ulong, ProductVectorDTO>("product-vectors");
 
 builder.Services.AddCors(options =>
 {
