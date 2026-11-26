@@ -53,6 +53,7 @@ public class ProductController : ControllerBase
         {
             List<Product> products = await _productService.GetAllProductsAsync();
             return Ok(products);
+    
         }
         catch
         {
@@ -154,24 +155,47 @@ public class ProductController : ControllerBase
         }
     }
 
-    [HttpGet("aisearch/{query}", Name = "AISearchProducts")]
-    public async Task<ActionResult<IEnumerable<Product>>> AISearchProducts(string query)
+    [HttpGet("aisearch", Name = "AISearchProducts")]
+    public async Task<ActionResult<IEnumerable<Product>>> AISearchProducts([FromQuery] string query)
     {
         if (string.IsNullOrWhiteSpace(query))
         {
             return BadRequest("Search query cannot be empty.");
         }
 
-        IEnumerable<Product> products = await _productAIService.SearchProductsAsync(query);
+        try
+        {
+            IEnumerable<Product> products = await _productAIService.SearchProductsAsync(query);
 
-        return Ok(products);
+            return Ok(products);
+
+    
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "AI product search failed", error = ex.Message });
+        }
+
+
     }
 
-    [HttpGet("support/{query}", Name = "Support")]
-    public async Task<ActionResult<string>> Support(string query)
+    [HttpGet("support", Name = "Support")]
+    public async Task<ActionResult<string>> Support([FromQuery] string query)
     {
-        string response = await _productAIService.SupportAsync(query);
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return BadRequest("Support query cannot be empty.");
+        }
 
-        return Ok(response);
+        try
+        {
+            string response = await _productAIService.SupportAsync(query);
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "AI support request failed", error = ex.Message });
+        }
     }
 }
