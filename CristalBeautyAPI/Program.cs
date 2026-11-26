@@ -5,6 +5,7 @@ using CristalBeautyAPI.Repositories.IRepository;
 using CristalBeautyAPI.Services;
 using CristalBeautyAPI.Services.IServices;
 using Microsoft.Extensions.AI;
+using Microsoft.OpenApi;
 using OpenAI;
 using Qdrant.Client;
 using System.ClientModel;
@@ -66,7 +67,33 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer((document, context, cancellationToken) =>
+    {
+        document.Info.Title = "CristalBeautyAPI";
+        document.Info.Version = "v1";
+
+        document.Components ??= new OpenApiComponents();
+        document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
+        document.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
+        {
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT",
+            In = ParameterLocation.Header,
+            Description = "Enter your JWT token"
+        };
+
+        document.Security ??= [];
+        document.Security.Add(new OpenApiSecurityRequirement
+        {
+            [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+        });
+
+        return Task.CompletedTask;
+    });
+});
 
 WebApplication app = builder.Build();
 
@@ -74,6 +101,10 @@ if (app.Environment.IsDevelopment())
 {
     Console.WriteLine("Running in Development!");
     app.MapOpenApi();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/openapi/v1.json", "CristalBeautyAPI v1");
+    });
 }
 
 app.UseCors();
