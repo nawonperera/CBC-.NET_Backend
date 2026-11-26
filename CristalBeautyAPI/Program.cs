@@ -58,7 +58,7 @@ builder.Services.AddSingleton<QdrantClient>(sp =>
     return new QdrantClient(uri, apiKey: apiKey);
 });
 
-builder.Services.AddQdrantCollection<ulong, ProductVectorDTO>("product-vectors");
+builder.Services.AddQdrantCollection<Guid, ProductVectorDTO>("product-vectors");
 
 builder.Services.AddCors(options =>
 {

@@ -1,7 +1,6 @@
 using CristalBeautyAPI.Helpers;
 using CristalBeautyAPI.Models;
 using CristalBeautyAPI.Models.Dto;
-using CristalBeautyAPI.Services;
 using CristalBeautyAPI.Services.IServices;
 using CristalBeautyAPI.Utility;
 using Microsoft.AspNetCore.Mvc;
