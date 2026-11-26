@@ -166,10 +166,7 @@ public class ProductController : ControllerBase
         try
         {
             IEnumerable<Product> products = await _productAIService.SearchProductsAsync(query);
-
             return Ok(products);
-
-    
         }
         catch (Exception ex)
         {
@@ -190,7 +187,6 @@ public class ProductController : ControllerBase
         try
         {
             string response = await _productAIService.SupportAsync(query);
-
             return Ok(response);
         }
         catch (Exception ex)

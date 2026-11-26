@@ -56,7 +56,7 @@ public class ProductAIService(IProductRepository productRepository, IProductAIRe
                 Name = product.Name,
                 Description = product.Description,
                 Price = (double)product.Price,
-                Image = product.Images[0],
+                Image = product.Images is { Count: > 0 } ? product.Images[0] : string.Empty,
                 Vector = await embeddingGenerator.GenerateVectorAsync(productInfo)
             };
 
@@ -73,7 +73,7 @@ public class ProductAIService(IProductRepository productRepository, IProductAIRe
 
         var queryEmbedding = await embeddingGenerator.GenerateVectorAsync(query);
 
-        var results = productVectorCollection.SearchAsync(queryEmbedding, 1); //1 means top 1st product we are returning from the search operation.(top 1 most similar result)
+        var results = productVectorCollection.SearchAsync(queryEmbedding, 5);
 
         List<Product> products = [];
         await foreach (var resultItem in results)
