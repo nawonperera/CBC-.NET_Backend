@@ -1,9 +1,10 @@
-using Microsoft.AspNetCore.Mvc;
-using CristalBeautyAPI.Models.Dto;
 using CristalBeautyAPI.Helpers;
 using CristalBeautyAPI.Models;
+using CristalBeautyAPI.Models.Dto;
+using CristalBeautyAPI.Services;
 using CristalBeautyAPI.Services.IServices;
 using CristalBeautyAPI.Utility;
+using Microsoft.AspNetCore.Mvc;
 
 namespace CristalBeautyAPI.Controllers;
 
@@ -12,10 +13,12 @@ namespace CristalBeautyAPI.Controllers;
 public class ProductController : ControllerBase
 {
     private readonly IProductService _productService;
+    private readonly IProductAIService _productAIService;
 
-    public ProductController(IProductService productService)
+    public ProductController(IProductService productService, IProductAIService productAIService)
     {
         _productService = productService;
+        _productAIService = productAIService;
     }
 
     [HttpPost]
@@ -149,5 +152,26 @@ public class ProductController : ControllerBase
         {
             return StatusCode(500, new { message = "Product not updated" });
         }
+    }
+
+    [HttpGet("aisearch/{query}", Name = "AISearchProducts")]
+    public async Task<ActionResult<IEnumerable<Product>>> AISearchProducts(string query)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return BadRequest("Search query cannot be empty.");
+        }
+
+        IEnumerable<Product> products = await _productAIService.SearchProductsAsync(query);
+
+        return Ok(products);
+    }
+
+    [HttpGet("support/{query}", Name = "Support")]
+    public async Task<ActionResult<string>> Support(string query)
+    {
+        string response = await _productAIService.SupportAsync(query);
+
+        return Ok(response);
     }
 }
